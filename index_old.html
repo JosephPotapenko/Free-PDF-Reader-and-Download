@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Document Reader — TTS</title>
+
+<!-- PDF.js (for PDF text extraction and rendering) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">TTS</div>
+    <div>
+  <h1>Document Reader — TTS</h1>
+  <p class="lead">Upload or paste text/PDF, choose a voice and speed, then play.</p>
+    </div>
+  </header>
+
+  <section class="card" style="display:flex;flex-direction:column;gap:14px">
+    <div class="row top-actions" style="flex-wrap:wrap;justify-content:space-between">
+      <div style="flex:1;min-width:320px;max-width:100%">
+        <label class="small">Upload files (txt or pdf)</label>
+        <div class="file-upload">
+          <input id="fileInput" type="file" accept=".txt,.pdf,text/*,application/pdf" multiple>
+          <div id="fileNames" class="file-names small-muted" title="No files selected">No files selected</div>
+        </div>
+      </div>
+      <div style="min-width:260px">
+        <label class="small">Voice</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="voiceSelect"></select>
+          <button id="moreVoicesBtn" class="btn ghost small-btn" title="How to get more voices">More…</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+  <button id="playPauseBtn" class="btn play-toggle is-paused"><i class="fa fa-play"></i> Play</button>
+  <button id="stopBtn" class="btn ghost"><i class="fa fa-stop"></i> Stop</button>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-left:auto">
+        <div style="min-width:170px">
+          <label class="small">Speed <span id="speedLabel">1.00×</span></label>
+          <input id="rateSlider" type="range" min="0.25" max="5" step="0.25" value="1">
+        </div>
+        <div style="width:160px">
+          <label class="small">Volume</label>
+          <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label class="small">Reader</label>
+      <div id="readerArea" style="border-radius:10px;overflow:hidden">
+        <div id="pdfViewer" style="display:none"></div>
+        <textarea id="pasteBox" placeholder="Paste or type text here. Double-click to jump." aria-label="Main text box"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:260px">
+        <label class="small">Loaded files</label>
+        <div id="fileList" class="file-list">
+          <div class="small-muted">No files yet</div>
+        </div>
+      </div>
+      <div style="min-width:260px">
+        <label class="small">Voice info</label>
+        <div class="voice-info" id="voiceInfo">Voices come from your browser/OS.</div>
+      </div>
+      
+    </div>
+
+    <div class="instructions">
+      <strong>Quick tips</strong>
+      <ul>
+        <li>Upload a .txt or .pdf, or paste directly into the box.</li>
+        <li>Pick a voice, set speed, then press Play.</li>
+        <li>Double-click the text or PDF to jump.</li>
+        <li>Very long text plays fully — it’s split under the hood to keep playback smooth.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- More Voices Modal -->
+  <div id="moreVoicesModal" class="modal-backdrop" style="display:none" aria-hidden="true" role="dialog" aria-labelledby="mvTitle" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="mvTitle">Get more voices</h3>
+        <button id="closeMoreVoices" class="btn icon" aria-label="Close"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p>This reader uses your browser's built‑in SpeechSynthesis voices. To add more voices, install them in your operating system or browser, then click Refresh below.</p>
+        <div class="two-col">
+          <div>
+            <h4>Quick links by browser</h4>
+            <ul>
+              <li>Microsoft Edge: <a href="https://microsoftedge.microsoft.com/addons/search/tts" target="_blank" rel="noopener">Edge Add‑ons — Text‑to‑Speech</a> (browser extensions; not added to Web Speech voices)</li>
+              <li>Google Chrome: <a href="https://chromewebstore.google.com/search/text%20to%20speech?category=extensions" target="_blank" rel="noopener">Chrome Web Store — Text‑to‑Speech</a> (extensions only)</li>
+              <li>Mozilla Firefox: <a href="https://addons.mozilla.org/firefox/search/?q=text%20to%20speech" target="_blank" rel="noopener">Firefox Add‑ons — Text‑to‑Speech</a> (extensions only)</li>
+            </ul>
+            <p class="small-muted">Note: Browser extensions can read pages but usually won’t appear in this voice list. For voices here, install system voices below.</p>
+          </div>
+          <div>
+            <h4>System voice downloads</h4>
+            <ul>
+              <li>Windows 10/11: <a href="https://support.microsoft.com/windows/use-narrator-in-windows" target="_blank" rel="noopener">Use Narrator</a> • Add voices via Settings → Accessibility → Narrator → Add more voices</li>
+              <li>Windows language packs: <a href="https://support.microsoft.com/windows/manage-the-languages-used-in-windows" target="_blank" rel="noopener">Manage languages</a> (installs TTS for some locales)</li>
+              <li>macOS: <a href="https://support.apple.com/guide/mac-help/use-spoken-content-on-mac-mchlp2290/mac" target="_blank" rel="noopener">Use Spoken Content</a> • Manage Voices in System Settings → Accessibility → Spoken Content</li>
+              <li>Linux: Install eSpeak NG (varies by distro) — <a href="https://github.com/espeak-ng/espeak-ng" target="_blank" rel="noopener">eSpeak NG project</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="two-col">
+          <div>
+            <h4>Windows</h4>
+            <ul>
+              <li>Settings → Time & Language → Language & Region → Preferred languages → Add a language.</li>
+              <li>Settings → Accessibility → Narrator → Add more voices.</li>
+              <li>Restart the browser after installing voices.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>macOS</h4>
+            <ul>
+              <li>System Settings → Accessibility → Spoken Content → System Voice → Manage Voices…</li>
+              <li>Download additional voices and restart the browser.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="two-col">
+          <div>
+            <h4>Chrome/Edge</h4>
+            <ul>
+              <li>Ensure the browser is up to date. It exposes OS voices and some built‑in voices.</li>
+              <li>After installing OS voices, fully quit and relaunch the browser.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Want studio voices?</h4>
+            <p>Commercial cloud TTS (Azure, Google, Amazon, ElevenLabs) can be integrated but requires API keys and a small backend. Ask to enable this option.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="refreshVoicesBtn" class="btn"><i class="fa fa-rotate"></i> Refresh voices</button>
+        <button id="closeMoreVoicesFooter" class="btn ghost">Close</button>
+      </div>
+    </div>
+  </div>
+
+<script src="./script.js" defer></script>
+</body>
+</html>
